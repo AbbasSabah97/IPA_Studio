@@ -1,0 +1,10 @@
+iPASide Python Engine: MIT licensed, fetched from https://github.com/pwnapplehat/iPASide
+Pinned commit: be811fcaea8556fe5108dd25279d626fa0d56435
+Its original LICENSE is copied to the Windows payload by the build process.
+
+zsign: MIT licensed, built from https://github.com/zhlynn/zsign
+Pinned commit: 9299685bab7ef99827e06e5dfda93af747386590
+The build applies a clearly documented, locally-authored stdin-secret patch.
+
+SideStore community Anisette servers are separate, third-party hosted services.
+Listing them does not assert security or endorsement. Servers are not bundled.

@@ -1,0 +1,13 @@
+IPA Studio Trusted v4.0
+=======================
+1- أنشئ مستودع GitHub جديداً (Private).
+2- ارفع جميع محتويات الحزمة بما فيها .github.
+3- افتح Actions > Build IPA Studio Trusted v4 (Windows).
+4- اضغط Run workflow.
+5- نزّل Artifact: IPAStudio-Trusted-v4-Windows-Setup.
+6- تحقق من SHA256SUMS.txt وثبت IPAStudio-Trusted-Setup-4.0.0.exe.
+7- ثبّت Apple Devices، وصل iPhone USB، وافق Trust.
+8- داخل البرنامج اختر خادم Anisette V3، فعّل موافقتك، وسجّل Apple ID العادي ثم 2FA.
+9- اختر IPA، فحص، تحديث الأجهزة، وقّع وثبّت.
+10- للتجديد صل USB مجدداً قبل 7 أيام.
+المصدر جاهز للبناء، لم يتم بناء EXE أو اختبار iOS 26 هنا.
