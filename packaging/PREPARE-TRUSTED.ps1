@@ -89,6 +89,9 @@ STUDIO_ROOT="$(cd "$HERE/../../../.." && pwd)"
 # Git for Windows / MSYS2 may still deliver CRLF in the worktree.
 # Normalize only this verified source file before the LF-based security patch.
 sed -i 's/\r$//' src/zsign.cpp
+# Git for Windows may also convert our checked-out .patch file to CRLF.
+# git apply needs patch/source line endings to match; normalize BOTH to LF.
+sed -i 's/\r$//' "$STUDIO_ROOT/packaging/zsign-stdin.patch"
 if ! git apply --check "$STUDIO_ROOT/packaging/zsign-stdin.patch"; then
   echo 'SECURITY STOP: zsign stdin patch does not match PINNED source.' >&2
   exit 1
