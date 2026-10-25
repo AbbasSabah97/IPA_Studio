@@ -7,13 +7,13 @@ diff --git a/src/zsign.cpp b/src/zsign.cpp
  #include <list>
  #include <set>
  #include "macho.h"
-@@ -101,4 +102,5 @@ int usage()
+@@ -130,4 +131,5 @@ int usage()
  	ZLog::Print("-f, --force\t\tForce sign without cache when signing folder.\n");
  	ZLog::Print("-o, --output\t\tPath to output ipa file.\n");
  	ZLog::Print("-p, --password\t\tPassword for private key or p12 file.\n");
 +	ZLog::Print("-p @stdin\t\tRead P12 password from standard input; do not expose in process arguments.\n");
  	ZLog::Print("-b, --bundle_id\t\tNew bundle id to change.\n");
-@@ -310,3 +312,11 @@ int main(int argc, char* argv[])
+@@ -312,3 +314,11 @@ int main(int argc, char* argv[])
 -	if (optind >= argc) {
 +	// IPA Studio Secure patch: prevent P12 secrets from appearing in the
 +	// Windows command line, process list, crash reports or shell history.
