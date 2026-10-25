@@ -18,7 +18,7 @@ class WindowsZsignPatchTests(unittest.TestCase):
         self.assertIn("sed -i 's/\\r$//' src/zsign.cpp", script)
         self.assertIn('git apply --check "$STUDIO_ROOT/packaging/zsign-stdin.patch"', script)
         self.assertIn('SECURITY STOP: zsign stdin patch', script)
-        self.assertIn('sed -i 's/\r$//' "$STUDIO_ROOT/packaging/zsign-stdin.patch"', script)
+        self.assertIn("sed -i 's/\\r$//' \"$STUDIO_ROOT/packaging/zsign-stdin.patch\"", script)
         self.assertIn('packaging/*.patch text eol=lf', (ROOT / '.gitattributes').read_text())
         if not shutil.which("git"):
             self.skipTest("git unavailable")
