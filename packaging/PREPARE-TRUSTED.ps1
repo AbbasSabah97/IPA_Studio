@@ -75,6 +75,8 @@ $old = 'git clone --depth 1 https://github.com/zhlynn/zsign.git "$WORK"'
 $new = @'
 git init "$WORK"
 git -C "$WORK" remote add origin https://github.com/zhlynn/zsign.git
+# Prevent Git for Windows from converting the pinned zsign C++ source to CRLF.
+git -C "$WORK" config core.autocrlf false
 git -C "$WORK" fetch --depth 1 origin 9299685bab7ef99827e06e5dfda93af747386590
 git -C "$WORK" checkout --detach FETCH_HEAD
 test "$(git -C "$WORK" rev-parse HEAD)" = "9299685bab7ef99827e06e5dfda93af747386590"
@@ -84,6 +86,9 @@ $old = 'git apply "$HERE/win-largefile.patch"'
 $new = @'
 git apply "$HERE/win-largefile.patch"
 STUDIO_ROOT="$(cd "$HERE/../../../.." && pwd)"
+# Git for Windows / MSYS2 may still deliver CRLF in the worktree.
+# Normalize only this verified source file before the LF-based security patch.
+sed -i 's/\r$//' src/zsign.cpp
 if ! git apply --check "$STUDIO_ROOT/packaging/zsign-stdin.patch"; then
   echo 'SECURITY STOP: zsign stdin patch does not match PINNED source.' >&2
   exit 1
