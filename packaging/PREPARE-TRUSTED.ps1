@@ -84,6 +84,10 @@ $old = 'git apply "$HERE/win-largefile.patch"'
 $new = @'
 git apply "$HERE/win-largefile.patch"
 STUDIO_ROOT="$(cd "$HERE/../../../.." && pwd)"
+if ! git apply --check "$STUDIO_ROOT/packaging/zsign-stdin.patch"; then
+  echo 'SECURITY STOP: zsign stdin patch does not match PINNED source.' >&2
+  exit 1
+fi
 git apply "$STUDIO_ROOT/packaging/zsign-stdin.patch"
 '@
 $t = Replace-Required $t $old $new 'pinned zsign patch hook changed'
