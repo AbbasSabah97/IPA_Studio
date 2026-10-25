@@ -21,29 +21,41 @@ if(-not $main.Contains('IPASTUDIO_APPLE_EMAIL') -or -not $main.Contains('IPASTUD
     throw 'SECURITY STOP: upstream engine was not patched'
 }
 Write-Host '3/6 - Build portable signing engine (incl. native signer)'
-& (Join-Path $upstream 'packaging\build-engine.ps1') -Python $Python
-if($LASTEXITCODE -ne 0){throw 'Engine build failed'}
+# Upstream build-engine.ps1 uses Set-Location internally. Always restore the
+# IPA Studio project directory even if it throws or exits unsuccessfully.
+Push-Location $root
+try {
+    & (Join-Path $upstream 'packaging\build-engine.ps1') -Python $Python
+    if($LASTEXITCODE -ne 0){throw 'Engine build failed'}
+} finally {
+    Pop-Location
+}
+Set-Location $root
 $engine=Join-Path $upstream 'dist\engine\python'
 if(-not(Test-Path (Join-Path $engine 'python.exe'))){throw 'Portable engine not generated'}
 # Policy must load on every launch of the bundled engine, even when invoked
 # outside IPA Studio. Also keep a copy alongside the GUI for source/runtime env.
-Copy-Item 'policy\sitecustomize.py' (Join-Path $engine 'Lib\site-packages\sitecustomize.py') -Force
+$policyFile=Join-Path $root 'policy\sitecustomize.py'
+$targetSite=Join-Path $engine 'Lib\site-packages'
+if(-not(Test-Path -LiteralPath $policyFile)){throw "SECURITY STOP: missing policy file: $policyFile"}
+if(-not(Test-Path -LiteralPath $targetSite)){throw "SECURITY STOP: missing portable engine site-packages: $targetSite"}
+Copy-Item -LiteralPath $policyFile -Destination (Join-Path $targetSite 'sitecustomize.py') -Force
 Write-Host '4/6 - Check runtime policy & self-test'
 $env:IPASTUDIO_APPROVED_ANISETTE='https://new.ani.sidestore.io'
 & (Join-Path $engine 'python.exe') -c 'import socket, sitecustomize; assert socket.getaddrinfo is sitecustomize.guarded_getaddrinfo; exec("try:\n socket.getaddrinfo(\"example.org\",443)\n raise AssertionError(\"not blocked\")\nexcept PermissionError:\n print(\"Outbound DNS blocked\")")'
 if($LASTEXITCODE -ne 0){throw 'SECURITY STOP: runtime socket guard ineffective'}
 Remove-Item Env:IPASTUDIO_APPROVED_ANISETTE -ErrorAction SilentlyContinue
 Write-Host '5/6 - Compile GUI and assemble payload'
-Remove-Item publish -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $root 'publish') -Recurse -Force -ErrorAction SilentlyContinue
 & $Python -m PyInstaller --noconfirm --clean --onedir --windowed --name IPAStudio `
-  --distpath publish --workpath .build\pyinstaller --specpath .build `
-  --collect-all arabic_reshaper --collect-all bidi main.py
+  --distpath (Join-Path $root 'publish') --workpath (Join-Path $root '.build\pyinstaller') --specpath (Join-Path $root '.build') `
+  --collect-all arabic_reshaper --collect-all bidi (Join-Path $root 'main.py')
 if($LASTEXITCODE -ne 0){throw 'GUI build failed'}
 $dest=Join-Path $root 'publish\IPAStudio'
 if(-not(Test-Path (Join-Path $dest 'IPAStudio.exe'))){throw 'Missing GUI EXE'}
 New-Item -ItemType Directory (Join-Path $dest 'engine') -Force | Out-Null
 Copy-Item $engine (Join-Path $dest 'engine\python') -Recurse -Force
-Copy-Item policy (Join-Path $dest 'policy') -Recurse -Force
+Copy-Item -LiteralPath (Join-Path $root 'policy') -Destination (Join-Path $dest 'policy') -Recurse -Force
 Copy-Item (Join-Path $upstream 'LICENSE') (Join-Path $dest 'iPASide-LICENSE.txt') -Force
 & (Join-Path $dest 'engine\python\python.exe') -m ipaside_engine version
 if($LASTEXITCODE -ne 0){throw 'Copied engine failed'}
