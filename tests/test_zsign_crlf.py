@@ -18,6 +18,8 @@ class WindowsZsignPatchTests(unittest.TestCase):
         self.assertIn("sed -i 's/\\r$//' src/zsign.cpp", script)
         self.assertIn('git apply --check "$STUDIO_ROOT/packaging/zsign-stdin.patch"', script)
         self.assertIn('SECURITY STOP: zsign stdin patch', script)
+        self.assertIn('sed -i 's/\r$//' "$STUDIO_ROOT/packaging/zsign-stdin.patch"', script)
+        self.assertIn('packaging/*.patch text eol=lf', (ROOT / '.gitattributes').read_text())
         if not shutil.which("git"):
             self.skipTest("git unavailable")
         with tempfile.TemporaryDirectory() as tmp:
@@ -49,6 +51,18 @@ class WindowsZsignPatchTests(unittest.TestCase):
             self.assertIn("patch failed: src/zsign.cpp:1", before.stderr)
             # Equivalent to GNU sed -i 's/\r$//' on the source file.
             src.write_bytes(src.read_bytes().replace(b"\r\n", b"\n"))
+            # Also reproduce the *actual* CI failure: CRLF patch vs LF source.
+            patch_crlf = root / "patch-crlf.patch"
+            patch_crlf.write_bytes(Path(patch).read_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n"))
+            bad_patch = subprocess.run(["git", "apply", "--check", str(patch_crlf)],
+                                       cwd=root, capture_output=True, text=True)
+            self.assertNotEqual(bad_patch.returncode, 0)
+            self.assertIn("patch failed: src/zsign.cpp:1", bad_patch.stderr)
+            # Normalize the patch as the build now does.
+            patch_crlf.write_bytes(patch_crlf.read_bytes().replace(b"\r\n", b"\n"))
+            good_patch = subprocess.run(["git", "apply", "--check", str(patch_crlf)],
+                                        cwd=root, capture_output=True, text=True)
+            self.assertEqual(good_patch.returncode, 0, good_patch.stderr)
             after = subprocess.run(["git", "apply", "--check", patch],
                                    cwd=root, capture_output=True, text=True)
             self.assertEqual(after.returncode, 0, after.stderr)
