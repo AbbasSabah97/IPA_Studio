@@ -142,7 +142,11 @@ class TrustedTests(unittest.TestCase):
         exe=self.base/'app'/'IPAStudio.exe';exe.parent.mkdir();exe.write_bytes(b'x')
         engine=exe.parent/'engine'/'python'/'python.exe';engine.parent.mkdir(parents=True);engine.write_bytes(b'fake')
         with mock.patch.object(core.sys,'frozen',True,create=True),mock.patch.object(core.sys,'executable',str(exe)):
-            self.assertEqual(core.bundled_engine(),engine)
+            located = core.bundled_engine()
+            self.assertIsNotNone(located)
+            # Windows expands 8.3 short names (RUNNER~1) when Path.resolve()
+            # is called. Compare filesystem identity, not textual spelling.
+            self.assertTrue(located.samefile(engine), f"{located!s} != {engine!s}")
 
     def test_gui_has_consent_and_workflow(self):
         from ipa_studio.ui import App
