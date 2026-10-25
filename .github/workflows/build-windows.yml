@@ -17,6 +17,9 @@ jobs:
       - name: Apply strict signing and 2FA patches
         shell: pwsh
         run: .\packaging\PREPARE-TRUSTED.ps1
+      - name: Security and line-ending regression tests
+        shell: pwsh
+        run: python -m unittest discover -s tests -v
       - uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
